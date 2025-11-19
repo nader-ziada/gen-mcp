@@ -302,15 +302,30 @@ genmcp build [flags]
 | `--base-image` | | *(auto)* | Base container image to build on |
 | `--platform` | | `multi-arch` | Target platform (e.g., `linux/amd64`) |
 | `--push` | | `false` | Push to registry instead of saving locally |
+| `--server-version` | | *(auto)* | Server binary version to download (default: latest for dev builds, CLI version for releases) |
 
 #### How It Works
 
 The `build` command:
 
-1. **Validates the MCP file** - Ensures configuration is valid
-2. **Builds container image** - Creates a containerized MCP server
-3. **Supports multi-arch** - By default builds for `linux/amd64` and `linux/arm64`
-4. **Saves or pushes** - Either stores locally or pushes to a container registry
+1. **Downloads server binaries** - Fetches required binaries from GitHub releases (with cosign verification)
+2. **Validates the MCP file** - Ensures configuration is valid
+3. **Builds container image** - Creates a containerized MCP server
+4. **Supports multi-arch** - By default builds for `linux/amd64` and `linux/arm64`
+5. **Saves or pushes** - Either stores locally or pushes to a container registry
+
+**Binary Management:**
+- Server binaries are downloaded from GitHub releases and cached locally
+- Downloaded binaries are cryptographically verified with Sigstore for security (built-in)
+- Cache location: 
+  - Linux: `~/.cache/genmcp/binaries/`
+  - macOS: `~/Library/Caches/.genmcp/binaries/`
+  - Windows: `%LOCALAPPDATA%\.genmcp\binaries\`
+- **Version Matching**: 
+  - Release CLI versions download matching server binaries
+  - Development CLI versions automatically use latest release
+  - Use `--server-version` to override
+- **Requirements**: Network access to GitHub releases and API
 
 #### Examples
 
@@ -324,6 +339,9 @@ genmcp build -f config/api.yaml --tag myapi:v1.0
 
 # Build for specific platform only
 genmcp build --tag myapi:latest --platform linux/amd64
+
+# Build with specific server version
+genmcp build --tag myapi:latest --server-version v0.1.0
 ```
 
 **Multi-architecture build:**
